@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Prober Assistant</string>
+    <string name="prober_account">Prober Account</string>
+    <string name="prober_account_username">Prober Username</string>
+    <string name="prober_account_password">Prober Password</string>
+    <string name="start">Start</string>
+    <string name="status_not_running">Stopped</string>
+    <string name="status_running">Running</string>
+    <string name="no_password_no_username">Empty username or password</string>
+    <string name="ok">OK</string>
+    <string name="status_proxy">Starting Proxy</string>
+    <string name="status_login">Attempt to Login</string>
+    <string name="stop">Stop</string>
+</resources>

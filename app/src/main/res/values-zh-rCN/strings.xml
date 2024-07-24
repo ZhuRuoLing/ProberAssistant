@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">查分器助手</string>
+    <string name="prober_account">查分器账号</string>
+    <string name="prober_account_username">查分器账号用户名</string>
+    <string name="prober_account_password">查分器账号密码</string>
+    <string name="start">启动</string>
+    <string name="status_not_running">已停止</string>
+    <string name="status_running">正在运行</string>
+    <string name="no_password_no_username">用户名或者密码为空</string>
+    <string name="ok">好</string>
+    <string name="status_proxy">正在启动代理</string>
+    <string name="status_login">正在登录账号</string>
+    <string name="stop">停止</string>
+</resources>
