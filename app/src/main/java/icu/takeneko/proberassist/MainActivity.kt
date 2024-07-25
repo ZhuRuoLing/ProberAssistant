@@ -2,17 +2,30 @@ package icu.takeneko.proberassist
 
 import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Intent
+import android.net.VpnService
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
 import icu.takeneko.proberassist.databinding.ActivityMainBinding
+import icu.takeneko.proberassist.prober.ProberAccess
+import icu.takeneko.proberassist.service.LocalProxyService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.lang.Exception
 import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var state: ApplicationState by Delegates.observable(ApplicationState.STOP) { _, before, after ->
-        updateStateDisplay(before, after)
+        lifecycleScope.launch(Dispatchers.Main) {
+            updateStateDisplay(before, after)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,39 +33,95 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.buttonSwitch.setOnClickListener {
-            if (state == ApplicationState.STOP) {
-                if (!start()) {
-                    state = ApplicationState.STOP
-                    return@setOnClickListener
-                }
-            } else {
-                if (!stop()) {
-                    state = ApplicationState.RUNNING
-                    return@setOnClickListener
+            lifecycleScope.launch(Dispatchers.IO) {
+                if (state == ApplicationState.STOP) {
+                    start()
+                } else {
+                    stop()
                 }
             }
         }
         state = ApplicationState.STOP
+        ProberAccess.load(this)
+        binding.textUsername.setText(ProberAccess.username)
+        binding.textPassword.setText(ProberAccess.password)
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                "android.permission.POST_NOTIFICATIONS"
+            )
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    "android.permission.POST_NOTIFICATIONS"
+                ),
+                0
+            )
+        }
     }
 
-    fun start(): Boolean {
-        state = ApplicationState.LOGIN
-        val password = binding.textPassword.text ?: ""
-        val username = binding.textUsername.text ?: ""
-        if (password.isEmpty() || username.isEmpty()) {
+    private fun info(infoId: Int) {
+        lifecycleScope.launch(Dispatchers.Main) {
             Snackbar.make(
                 binding.buttonSwitch,
-                R.string.no_password_no_username,
+                infoId,
                 Snackbar.LENGTH_LONG
             ).setAction(R.string.ok) {}.setAnchorView(binding.buttonSwitch).show()
+        }
+    }
+
+    private suspend fun start(): Boolean {
+        val password = binding.textPassword.text?.toString() ?: ""
+        val username = binding.textUsername.text?.toString() ?: ""
+        if (password.isEmpty() || username.isEmpty()) {
+            info(R.string.no_password_no_username)
+            state = ApplicationState.STOP
             return false
         }
-        state = ApplicationState.RUNNING
+        state = ApplicationState.LOGIN
+        ProberAccess.updateAccount(username, password, this)
+        try {
+            if (!ProberAccess.login()) {
+                info(R.string.invalid_login_credentals)
+                state = ApplicationState.STOP
+                return false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            info(R.string.login_failed)
+            state = ApplicationState.STOP
+            return false
+        }
+        state = ApplicationState.PROXY
+        lifecycleScope.launch(Dispatchers.Main) {
+            val intent = VpnService.prepare(this@MainActivity)
+            if (intent == null) {
+                onActivityResult(0, RESULT_OK, null);
+            } else {
+                startActivityForResult(intent, 0)
+            }
+        }
         return true
     }
 
-    fun stop(): Boolean {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != RESULT_OK) {
+            info(R.string.permission_disallowed_proxy)
+            state = ApplicationState.STOP
+            return
+        }
+        val intent = Intent(this, LocalProxyService::class.java)
+        intent.putExtra("status", state.ordinal)
+        intent.putExtra("localProxyPort", 8282)
+        startService(intent)
+        state = ApplicationState.RUNNING
+    }
+
+    private suspend fun stop(): Boolean {
         state = ApplicationState.STOP
+        stopService(Intent(this, LocalProxyService::class.java))
         return true
     }
 

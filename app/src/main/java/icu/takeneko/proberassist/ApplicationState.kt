@@ -25,7 +25,7 @@ enum class ApplicationState(
         false
     ),
     PROXY(
-        R.color.grey,
+        R.color.orange,
         R.string.status_proxy,
         R.string.start,
         R.drawable.ic_baseline_circle_24,
