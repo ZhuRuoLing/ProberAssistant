@@ -1,4 +1,4 @@
-package icu.takeneko.proberassist.prober
+package icu.takeneko.proberassist.network
 
 import kotlinx.serialization.Serializable
 

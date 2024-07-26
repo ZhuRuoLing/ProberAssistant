@@ -2,8 +2,6 @@ package icu.takeneko.proberassist
 
 import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
@@ -12,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import icu.takeneko.proberassist.databinding.ActivityMainBinding
-import icu.takeneko.proberassist.prober.ProberAccess
+import icu.takeneko.proberassist.network.ProberAccess
 import icu.takeneko.proberassist.service.LocalProxyService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -119,8 +117,9 @@ class MainActivity : AppCompatActivity() {
         state = ApplicationState.RUNNING
     }
 
-    private suspend fun stop(): Boolean {
+    private fun stop(): Boolean {
         state = ApplicationState.STOP
+        LocalProxyService.instance?.stop()
         stopService(Intent(this, LocalProxyService::class.java))
         return true
     }
