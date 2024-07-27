@@ -12,4 +12,12 @@
     <string name="status_proxy">正在启动代理</string>
     <string name="status_login">正在登录账号</string>
     <string name="stop">停止</string>
+    <string name="invalid_login_credentals">无效的登录凭据</string>
+    <string name="login_failed">登录失败</string>
+    <string name="channel_status">状态</string>
+    <string name="local_proxy_running">本地代理正在运行中</string>
+    <string name="not_supported_shuzuku_version">无效的 Shizuku 版本</string>
+    <string name="permission_denied">未授予 Shizuku 权限</string>
+    <string name="status">状态</string>
+    <string name="channel_status_desc">应用程序状态</string>
 </resources>

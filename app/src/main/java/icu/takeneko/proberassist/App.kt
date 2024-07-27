@@ -1,13 +1,18 @@
 package icu.takeneko.proberassist
 
 import android.app.Application
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.net.ConnectivityManager
+import android.content.res.AssetManager
 import androidx.core.content.getSystemService
 import com.google.android.material.color.DynamicColors
+import icu.takeneko.proberassist.interop.Interop
+import icu.takeneko.proberassist.util.sendNotification
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.actor
+import libprob.Libprob
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.sui.Sui
 
@@ -21,6 +26,8 @@ class App : Application() {
             CHANNEL_STATUS_ID
         )
         application = this
+        Libprob.updatePlatform(Interop(PROXY_PORT, notificationSender))
+        assetManager = assets
     }
 
     private fun registerNotificationChannel(
@@ -45,8 +52,15 @@ class App : Application() {
         val notification by lazy {
             application.getSystemService<NotificationManager>()!!
         }
+        lateinit var assetManager:AssetManager
         var isSui = Sui.init("icu.takeneko.proberassist")
             private set
+
+        private val notificationSender = GlobalScope.actor<String>(Dispatchers.Main){
+            for (m in channel){
+                application.sendNotification(R.string.status, m)
+            }
+        }
     }
 
     override fun attachBaseContext(base: Context?) {

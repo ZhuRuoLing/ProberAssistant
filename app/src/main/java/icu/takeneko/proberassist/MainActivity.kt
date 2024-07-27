@@ -6,13 +6,17 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.ProxyInfo
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import icu.takeneko.proberassist.App.Companion.TAG
+import icu.takeneko.proberassist.App.Companion.assetManager
 import icu.takeneko.proberassist.databinding.ActivityMainBinding
 import icu.takeneko.proberassist.network.IConnectivityManagerAccess
+import icu.takeneko.proberassist.network.LocalProxyAccess
 import icu.takeneko.proberassist.network.ProberAccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -28,6 +32,8 @@ import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var saveFileActivityLauncher: ActivityResultLauncher<String>
+    private lateinit var fileContent: ByteArray
     private lateinit var binding: ActivityMainBinding
     private var shizukuBinderState = false
     private var state: ApplicationState by Delegates.observable(ApplicationState.STOP) { _, before, after ->
@@ -51,13 +57,13 @@ class MainActivity : AppCompatActivity() {
         OnRequestPermissionResultListener { requestCode, grantResult ->
             Log.i(TAG, "permission: $grantResult")
             if (grantResult == PERMISSION_GRANTED) {
+                println(IConnectivityManagerAccess.connectivityManager.globalProxy)
+                IConnectivityManagerAccess.connectivityManager.globalProxy = null
                 GlobalScope.launch(Dispatchers.IO) {
                     while (!shizukuBinderState) delay(1)
                     IConnectivityManagerAccess.connectivityManager.globalProxy =
                         ProxyInfo.buildDirectProxy("localhost", App.PROXY_PORT)
-                    for (declaredMethod in IConnectivityManagerAccess.connectivityManager.javaClass.methods) {
-                        println(declaredMethod)
-                    }
+                    LocalProxyAccess.start()
                     state = ApplicationState.RUNNING
                 }
             } else {
@@ -104,6 +110,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        binding.buttonExportCertificate.setOnClickListener {
+            saveFile("cert.crt", assetManager.open("cert.crt").readBytes())
+        }
         state = ApplicationState.STOP
         ProberAccess.load(this)
         binding.textUsername.setText(ProberAccess.username)
@@ -124,6 +133,13 @@ class MainActivity : AppCompatActivity() {
         Shizuku.addBinderReceivedListenerSticky(onBinderReceivedListener)
         Shizuku.addBinderDeadListener(onBinderDeadListener)
         Shizuku.addRequestPermissionResultListener(onRequestPermissionResultListener)
+        saveFileActivityLauncher =
+            registerForActivityResult(ActivityResultContracts.CreateDocument("*/*")) {
+                if (it == null) return@registerForActivityResult
+                contentResolver.openOutputStream(it)?.use { os ->
+                    os.write(fileContent)
+                }
+            }
     }
 
     override fun onDestroy() {
@@ -131,6 +147,7 @@ class MainActivity : AppCompatActivity() {
         Shizuku.removeBinderDeadListener(onBinderDeadListener)
         Shizuku.removeRequestPermissionResultListener(onRequestPermissionResultListener)
         IConnectivityManagerAccess.connectivityManager.globalProxy = null
+        LocalProxyAccess.stop()
         super.onDestroy()
     }
 
@@ -185,6 +202,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun stop(): Boolean {
         IConnectivityManagerAccess.connectivityManager.globalProxy = null
+        LocalProxyAccess.stop()
         state = ApplicationState.STOP
         return true
     }
@@ -229,5 +247,10 @@ class MainActivity : AppCompatActivity() {
         binding.textPassword.isEnabled = after.enableTextBox
         binding.buttonSwitch.isEnabled = after.enableButton
         binding.buttonSwitch.setText(after.buttonText)
+    }
+
+    private fun saveFile(fileName: String, fileContent: ByteArray) {
+        this.fileContent = fileContent
+        saveFileActivityLauncher.launch(fileName)
     }
 }

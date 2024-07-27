@@ -88,9 +88,11 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="24dp"
             android:layout_marginTop="12dp"
+            app:passwordToggleEnabled="true"
             android:hint="@string/prober_account_password">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:inputType="textPassword"
                 android:id="@+id/text_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -98,23 +100,43 @@
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/button_switch"
-        style="@style/Widget.Material3.ExtendedFloatingActionButton.Icon.Primary"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|center_horizontal|bottom"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginBottom="24dp"
-        android:gravity="center"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
-        android:text="@string/start"
-        android:textAppearance="?textAppearanceBodyLarge"
-        app:cornerRadius="15dp"
-        app:icon="@android:drawable/ic_menu_send"
-        app:iconGravity="end" />
+        android:orientation="vertical">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_export_certificate"
+            style="@style/Widget.Material3.ExtendedFloatingActionButton.Icon.Primary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/export_certificate"
+            android:textAppearance="?textAppearanceBodyLarge"
+            app:cornerRadius="15dp"
+            app:iconGravity="end" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_switch"
+            style="@style/Widget.Material3.ExtendedFloatingActionButton.Icon.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/start"
+            android:textAppearance="?textAppearanceBodyLarge"
+            app:cornerRadius="15dp"
+            app:icon="@android:drawable/ic_menu_send"
+            app:iconGravity="end" />
+    </LinearLayout>
+
+
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

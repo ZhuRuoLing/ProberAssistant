@@ -42,6 +42,7 @@ android {
 
 dependencies {
 
+    implementation(fileTree('libs'))
     implementation libs.androidx.core.ktx
     implementation libs.androidx.appcompat
     implementation libs.material
@@ -57,7 +58,6 @@ dependencies {
     implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
     implementation "dev.rikka.shizuku:api:$shizuku_version"
     implementation "dev.rikka.shizuku:provider:$shizuku_version"
-
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:4.3'
 
     compileOnly project(":android_stub")
