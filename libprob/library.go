@@ -53,12 +53,10 @@ func StartProxy() {
 	proxyCtx := newProxyContext(apiClient, commandFatal, true)
 	patchGoproxyCert()
 	srv := proxyCtx.makeProxyServer()
-	patchGoproxyCert()
 	if host, _, err := net.SplitHostPort(Addr); err == nil && host == "" {
 		Addr = "localhost" + Addr
 	}
 	logI("代理已开启到 %s", Addr)
-	patchGoproxyCert()
 	logE("错误：", http.ListenAndServe(Addr, srv))
 }
 
