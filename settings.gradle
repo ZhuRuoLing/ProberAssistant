@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ProberAssistant"
 include ':app'
+include ":android_stub"

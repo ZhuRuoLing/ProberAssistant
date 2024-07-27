@@ -1,16 +1,15 @@
 package icu.takeneko.proberassist
 
 import android.app.Application
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import android.net.ConnectivityManager
-import android.net.Network
 import androidx.core.content.getSystemService
 import com.google.android.material.color.DynamicColors
-import icu.takeneko.proberassist.network.DefaultNetworkListener
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import org.lsposed.hiddenapibypass.HiddenApiBypass
+import rikka.sui.Sui
 
 class App : Application() {
     override fun onCreate() {
@@ -22,11 +21,6 @@ class App : Application() {
             CHANNEL_STATUS_ID
         )
         application = this
-        GlobalScope.launch(Dispatchers.Default) {
-            DefaultNetworkListener.start(this){
-                underlyingNetwork = it
-            }
-        }
     }
 
     private fun registerNotificationChannel(
@@ -46,15 +40,18 @@ class App : Application() {
     companion object {
         const val CHANNEL_STATUS_ID = "itpa.status"
         const val TAG = "ProberAssistant"
+        const val PROXY_PORT = 8866
         lateinit var application: App
-        val connectivity by lazy {
-            application.getSystemService<ConnectivityManager>()!!
-        }
         val notification by lazy {
             application.getSystemService<NotificationManager>()!!
         }
-        var underlyingNetwork: Network? = null
+        var isSui = Sui.init("icu.takeneko.proberassist")
+            private set
     }
 
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        HiddenApiBypass.addHiddenApiExemptions("L")
+    }
 
 }

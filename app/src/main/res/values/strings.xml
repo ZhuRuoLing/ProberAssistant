@@ -17,4 +17,6 @@
     <string name="channel_status_desc">Status of app</string>
     <string name="channel_status">Status</string>
     <string name="local_proxy_running">Local proxy is running</string>
+    <string name="not_supported_shuzuku_version">Shizuku pre-v11 is not supported</string>
+    <string name="permission_denied">Permission Denied</string>
 </resources>

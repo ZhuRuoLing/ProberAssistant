@@ -2,27 +2,92 @@ package icu.takeneko.proberassist
 
 import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
-import android.content.Intent
-import android.net.VpnService
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.net.ProxyInfo
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
+import icu.takeneko.proberassist.App.Companion.TAG
 import icu.takeneko.proberassist.databinding.ActivityMainBinding
+import icu.takeneko.proberassist.network.IConnectivityManagerAccess
 import icu.takeneko.proberassist.network.ProberAccess
-import icu.takeneko.proberassist.service.LocalProxyService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.lang.Exception
+import rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku.OnBinderDeadListener
+import rikka.shizuku.Shizuku.OnBinderReceivedListener
+import rikka.shizuku.Shizuku.OnRequestPermissionResultListener
+import rikka.shizuku.ShizukuSystemProperties
 import kotlin.properties.Delegates
+
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var shizukuBinderState = false
     private var state: ApplicationState by Delegates.observable(ApplicationState.STOP) { _, before, after ->
         lifecycleScope.launch(Dispatchers.Main) {
             updateStateDisplay(before, after)
+        }
+    }
+    private val onBinderReceivedListener = OnBinderReceivedListener {
+        if (Shizuku.isPreV11()) {
+            info(R.string.not_supported_shuzuku_version)
+            return@OnBinderReceivedListener
+        }
+        shizukuBinderState = true
+    }
+
+    private val onBinderDeadListener = OnBinderDeadListener {
+        shizukuBinderState = false
+    }
+
+    private val onRequestPermissionResultListener =
+        OnRequestPermissionResultListener { requestCode, grantResult ->
+            Log.i(TAG, "permission: $grantResult")
+            if (grantResult == PERMISSION_GRANTED) {
+                GlobalScope.launch(Dispatchers.IO) {
+                    while (!shizukuBinderState) delay(1)
+                    IConnectivityManagerAccess.connectivityManager.globalProxy =
+                        ProxyInfo.buildDirectProxy("localhost", App.PROXY_PORT)
+                    for (declaredMethod in IConnectivityManagerAccess.connectivityManager.javaClass.methods) {
+                        println(declaredMethod)
+                    }
+                    state = ApplicationState.RUNNING
+                }
+            } else {
+                info(R.string.permission_denied)
+                state = ApplicationState.STOP
+            }
+        }
+
+    private fun checkPermission(code: Int = 0): Boolean {
+        if (Shizuku.isPreV11()) {
+            info(R.string.not_supported_shuzuku_version)
+            return false
+        }
+        return try {
+            if (Shizuku.checkSelfPermission() == PERMISSION_GRANTED) {
+                true
+            } else {
+                if (Shizuku.shouldShowRequestPermissionRationale()) {
+                    info(R.string.permission_denied)
+                    false
+                } else {
+                    Shizuku.requestPermission(code)
+                    false
+                }
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            info(e.stackTraceToString())
+            state = ApplicationState.STOP
+            false
         }
     }
 
@@ -43,7 +108,6 @@ class MainActivity : AppCompatActivity() {
         ProberAccess.load(this)
         binding.textUsername.setText(ProberAccess.username)
         binding.textPassword.setText(ProberAccess.password)
-
         if (ActivityCompat.shouldShowRequestPermissionRationale(
                 this,
                 "android.permission.POST_NOTIFICATIONS"
@@ -57,6 +121,17 @@ class MainActivity : AppCompatActivity() {
                 0
             )
         }
+        Shizuku.addBinderReceivedListenerSticky(onBinderReceivedListener)
+        Shizuku.addBinderDeadListener(onBinderDeadListener)
+        Shizuku.addRequestPermissionResultListener(onRequestPermissionResultListener)
+    }
+
+    override fun onDestroy() {
+        Shizuku.removeBinderReceivedListener(onBinderReceivedListener)
+        Shizuku.removeBinderDeadListener(onBinderDeadListener)
+        Shizuku.removeRequestPermissionResultListener(onRequestPermissionResultListener)
+        IConnectivityManagerAccess.connectivityManager.globalProxy = null
+        super.onDestroy()
     }
 
     private fun info(infoId: Int) {
@@ -64,6 +139,16 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(
                 binding.buttonSwitch,
                 infoId,
+                Snackbar.LENGTH_LONG
+            ).setAction(R.string.ok) {}.setAnchorView(binding.buttonSwitch).show()
+        }
+    }
+
+    private fun info(info: String) {
+        lifecycleScope.launch(Dispatchers.Main) {
+            Snackbar.make(
+                binding.buttonSwitch,
+                info,
                 Snackbar.LENGTH_LONG
             ).setAction(R.string.ok) {}.setAnchorView(binding.buttonSwitch).show()
         }
@@ -92,35 +177,15 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         state = ApplicationState.PROXY
-        lifecycleScope.launch(Dispatchers.Main) {
-            val intent = VpnService.prepare(this@MainActivity)
-            if (intent == null) {
-                onActivityResult(0, RESULT_OK, null);
-            } else {
-                startActivityForResult(intent, 0)
-            }
+        if (checkPermission()) {
+            onRequestPermissionResultListener.onRequestPermissionResult(0, PERMISSION_GRANTED)
         }
         return true
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != RESULT_OK) {
-            info(R.string.permission_disallowed_proxy)
-            state = ApplicationState.STOP
-            return
-        }
-        val intent = Intent(this, LocalProxyService::class.java)
-        intent.putExtra("status", state.ordinal)
-        intent.putExtra("localProxyPort", 8282)
-        startService(intent)
-        state = ApplicationState.RUNNING
-    }
-
     private fun stop(): Boolean {
+        IConnectivityManagerAccess.connectivityManager.globalProxy = null
         state = ApplicationState.STOP
-        LocalProxyService.instance?.stop()
-        stopService(Intent(this, LocalProxyService::class.java))
         return true
     }
 

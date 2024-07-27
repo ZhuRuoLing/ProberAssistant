@@ -1,9 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.SBGAProber" parent="Theme.Light.AmazingOrange">
+    <style name="Base.Theme.ProberAssistant" parent="Theme.Light.AmazingOrange">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
-    <style name="Theme.SBGAProber" parent="Base.Theme.SBGAProber" />
+    <style name="Theme.ProberAssistant" parent="Base.Theme.ProberAssistant" />
 </resources>
