@@ -143,10 +143,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        Shizuku.removeBinderReceivedListener(onBinderReceivedListener)
-        Shizuku.removeBinderDeadListener(onBinderDeadListener)
-        Shizuku.removeRequestPermissionResultListener(onRequestPermissionResultListener)
-        IConnectivityManagerAccess.connectivityManager.globalProxy = null
+        if (Shizuku.getBinder() != null) {
+            Shizuku.removeBinderReceivedListener(onBinderReceivedListener)
+            Shizuku.removeBinderDeadListener(onBinderDeadListener)
+            Shizuku.removeRequestPermissionResultListener(onRequestPermissionResultListener)
+            IConnectivityManagerAccess.connectivityManager.globalProxy = null
+        }
         LocalProxyAccess.stop()
         super.onDestroy()
     }
@@ -201,9 +203,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stop(): Boolean {
-        IConnectivityManagerAccess.connectivityManager.globalProxy = null
-        LocalProxyAccess.stop()
-        state = ApplicationState.STOP
+        GlobalScope.launch(Dispatchers.IO) {
+            state = ApplicationState.STOPPING
+            IConnectivityManagerAccess.connectivityManager.globalProxy = null
+            LocalProxyAccess.stop()
+            state = ApplicationState.STOP
+        }
         return true
     }
 

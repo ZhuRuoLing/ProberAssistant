@@ -1,5 +1,6 @@
 package icu.takeneko.proberassist.network
 
+import android.os.Process
 import libprob.Libprob
 import kotlin.concurrent.thread
 
@@ -9,13 +10,13 @@ object LocalProxyAccess {
     fun start() {
         thread?.interrupt()
         thread?.join()
-        thread = thread(name = "Proxy Thread") {
+        thread = thread(name = "Proxy Thread", isDaemon = true) {
             Libprob.startProxy()
         }
     }
 
     fun stop() {
         thread?.interrupt()
-        thread?.join()
+        Libprob.stopProxy()
     }
 }

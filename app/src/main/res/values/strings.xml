@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Prober Assistant</string>
+    <string name="app_name">Prober Result Upload Assistant</string>
     <string name="prober_account">Prober Account</string>
     <string name="prober_account_username">Prober Username</string>
     <string name="prober_account_password">Prober Password</string>
@@ -20,4 +20,8 @@
     <string name="status">Status</string>
     <string name="channel_status_desc">Application status</string>
     <string name="export_certificate">Export Certificate</string>
+    <string name="status_stopping">Stopping</string>
+    <string name="upload_result_succeed">Successfully uploaded %s result</string>
+    <string name="upload_result_failed">Failed uploading %s result</string>
+    <string name="upload_result_failed_reason">Failed uploading %s result, reason %s</string>
 </resources>

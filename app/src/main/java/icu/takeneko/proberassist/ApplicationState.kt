@@ -39,5 +39,12 @@ enum class ApplicationState(
         R.drawable.ic_baseline_check_circle_24,
         false,
         true
+    ),
+    STOPPING(
+        R.color.yellow,
+        R.string.status_stopping,
+        R.string.start,
+        R.drawable.ic_baseline_circle_24,
+        false, false
     )
 }

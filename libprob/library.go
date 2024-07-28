@@ -1,7 +1,9 @@
 package libprob
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"github.com/elazarl/goproxy"
 	"net"
@@ -10,9 +12,16 @@ import (
 
 var Plt Platform
 var Addr = ":8033"
+var tid = 0
+var server *http.Server
 
 func UpdatePlatform(inst Platform) {
 	Plt = inst
+}
+
+func logD(format string, args ...interface{}) {
+	ct := fmt.Sprintf(format, args...)
+	Plt.LogI("[D]" + ct)
 }
 
 func logI(format string, args ...interface{}) {
@@ -45,6 +54,7 @@ func patchGoproxyCert() {
 }
 
 func StartProxy() {
+
 	Addr = fmt.Sprintf(":%d", Plt.GetLocalProxyPort())
 	apiClient, err := newProberAPIClient(8000)
 	if err != nil {
@@ -57,9 +67,17 @@ func StartProxy() {
 		Addr = "localhost" + Addr
 	}
 	logI("代理已开启到 %s", Addr)
-	logE("错误：", http.ListenAndServe(Addr, srv))
+	server = &http.Server{Addr: Addr, Handler: srv}
+	err = server.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logE("代理服务器意外退出：%s", err.Error())
+	}
+
 }
 
 func StopProxy() {
-
+	err := server.Shutdown(context.Background())
+	if err != nil {
+		logW("停止代理服务器错误: %s", err.Error())
+	}
 }

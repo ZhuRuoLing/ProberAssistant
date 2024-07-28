@@ -39,14 +39,15 @@ func (c *proberAPIClient) fetchDataMaimai(req0 *http.Request, cookies []*http.Co
 	labels := []string{
 		"Basic", "Advanced", "Expert", "Master", "Re: MASTER",
 	}
+	res = make(map[int][]byte)
 	for _, i := range c.maiDiffs {
+		logD("%d %s", i, labels[i])
 		logI("正在导入 %s 难度……", labels[i])
-		for {
-			res = make(map[int][]byte)
-			result, err := c.fetchDataMaimaiPerDiff(i)
-			if err != nil {
-				res[i] = result
-			}
+		result, err := c.fetchDataMaimaiPerDiff(i)
+		if err == nil {
+			res[i] = result
+		} else {
+			logE("[E] %s", err.Error())
 		}
 	}
 	return
@@ -55,17 +56,17 @@ func (c *proberAPIClient) fetchDataMaimai(req0 *http.Request, cookies []*http.Co
 func (c *proberAPIClient) fetchDataMaimaiPerDiff(diff int) (result []byte, err error) {
 	req, err := http.NewRequest(http.MethodGet, "https://maimai.wahlap.com/maimai-mobile/record/musicSort/search/?search=A&sort=1&playCheck=on&diff="+strconv.Itoa(diff), nil)
 	if err != nil {
-		logW("从 Wahlap 服务器获取数据失败，正在重试……")
+		logW("从 Wahlap 服务器获取数据失败: %s", err.Error())
 		return
 	}
 	resp, err := c.cl.Do(req)
 	if err != nil {
-		logW("从 Wahlap 服务器获取数据失败，正在重试……")
+		logW("从 Wahlap 服务器获取数据失败: %s", err.Error())
 		return
 	}
 	respText, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logW("从 Wahlap 服务器获取数据超时，正在重试……您也可以使用命令行参数 -timeout 120 来调整超时时间为 120 秒（默认为 30 秒）")
+		logW("从 Wahlap 服务器获取数据超时: %s", err.Error())
 		return
 	}
 	return respText, nil
@@ -93,7 +94,7 @@ func (c *proberAPIClient) fetchDataChuni(req0 *http.Request, cookies []*http.Coo
 	for i := 0; i < 7; i++ {
 		logI("正在导入 %s……", labels[i])
 		result, err := c.fetchDataChuniPerDiff(hds, cookies, i)
-		if err != nil {
+		if err == nil {
 			res[i] = result
 		}
 	}
@@ -124,25 +125,25 @@ func (c *proberAPIClient) fetchDataChuniPerDiff(headers http.Header, cookies []*
 		}
 		req, err := http.NewRequest(http.MethodPost, "https://chunithm.wahlap.com/mobile"+postUrls[diff], strings.NewReader(formData.Encode()))
 		if err != nil {
-			logW("从 Wahlap 服务器获取数据失败，正在重试……")
+			logW("从 Wahlap 服务器获取数据失败: %s", err.Error())
 			return nil, err
 		}
 		req.Header = headers
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		_, err = c.cl.Do(req)
 		if err != nil {
-			logW("从 Wahlap 服务器获取数据失败，正在重试……")
+			logW("从 Wahlap 服务器获取数据失败: %s", err.Error())
 			return nil, err
 		}
 	}
 	req, err := http.NewRequest(http.MethodGet, "https://chunithm.wahlap.com/mobile"+urls[diff], nil)
 	if err != nil {
-		logW("从 Wahlap 服务器获取数据失败，正在重试……")
+		logW("从 Wahlap 服务器获取数据失败: %s", err.Error())
 		return nil, err
 	}
 	resp, err := c.cl.Do(req)
 	if err != nil {
-		logW("从 Wahlap 服务器获取数据失败，正在重试……")
+		logW("从 Wahlap 服务器获取数据失败: %s", err.Error())
 		return nil, err
 	}
 	result, err := io.ReadAll(resp.Body)

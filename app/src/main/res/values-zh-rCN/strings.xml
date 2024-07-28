@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">查分器助手</string>
+    <string name="app_name">查分器成绩上传助手</string>
     <string name="prober_account">查分器账号</string>
     <string name="prober_account_username">查分器账号用户名</string>
     <string name="prober_account_password">查分器账号密码</string>
@@ -20,4 +20,9 @@
     <string name="permission_denied">未授予 Shizuku 权限</string>
     <string name="status">状态</string>
     <string name="channel_status_desc">应用程序状态</string>
+    <string name="export_certificate">导出证书</string>
+    <string name="status_stopping">正在停止</string>
+    <string name="upload_result_succeed">%s难度的结果上传成功</string>
+    <string name="upload_result_failed">%s难度的结果上传失败</string>
+    <string name="upload_result_failed_reason">%s难度的结果上传失败，原因：%s</string>
 </resources>

@@ -3,6 +3,7 @@ package icu.takeneko.proberassist.interop
 import android.util.Log
 import icu.takeneko.proberassist.App
 import icu.takeneko.proberassist.App.Companion.TAG
+import icu.takeneko.proberassist.network.ProberAccess
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
@@ -19,11 +20,17 @@ class Interop(private val localProxyPort: Int, private val messageActor: SendCha
     }
 
     override fun maiResultCallback(index: Long, encoded: ByteArray) {
-        Log.i(TAG, "maiResultCallback: $index ${encoded.decodeToString()}")
+        GlobalScope.launch {
+            Log.i(TAG, "maiResultCallback: $index")
+            ProberAccess.updateMaiRecord(index.toInt(), encoded)
+        }
     }
 
     override fun chuniResultCallback(index: Long, encoded: ByteArray) {
-        Log.i(TAG, "chuniResultCallback: $index ${encoded.decodeToString()}")
+        GlobalScope.launch {
+            Log.i(TAG, "chuniResultCallback: $index ${encoded.decodeToString()}")
+            ProberAccess.updateChuniRecord(index.toInt(), encoded)
+        }
     }
 
     override fun getCertificateContent(): ByteArray {
