@@ -1,0 +1,6 @@
+id=maidx_cert
+name=CA Cert Module for MaimaiDX Prober
+version=v1
+versionCode=1
+author=ZhuRuoLing
+description=This module adds ca certificate file to /system/etc/security/cacerts
